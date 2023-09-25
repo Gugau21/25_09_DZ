@@ -25,7 +25,6 @@ def names():
         for row in cur.execute("SELECT COUNT(DISTINCT first_name) FROM customers"):
             text += str(row[0])
         con.commit()
-
         return ("Number of unique names: " + text)
     except:
         return ("Something went wrong")
@@ -39,7 +38,6 @@ def tracks():
         for row in cur.execute("SELECT COUNT(ID) FROM tracks"):
             text += str(row[0])
         con.commit()
-
         return ("Number of tracks: " + text)
     except:
         return ("Something went wrong")
@@ -47,7 +45,16 @@ def tracks():
 @app.route("/tracks-sec/", methods=['GET'])
 def tracks_sec():
     try:
-        return ("tracks-sec")
+        con = sqlite3.connect("tables.db")
+        cur = con.cursor()
+        text = ""
+        for row in cur.execute("SELECT SUM(length_in_sec) FROM tracks"):
+            text +=  "Sum of song lengths: " + str(row[0]) + " sec<br>"
+        text += "Tracks:<br>"
+        for row in cur.execute("SELECT * FROM tracks"):
+            text +=  ' '.join(map(str, row)) + "<br>"
+        con.commit()
+        return (text)
     except:
         return ("Something went wrong")
 
