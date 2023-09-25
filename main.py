@@ -1,4 +1,6 @@
 import csv
+import sqlite3
+import random
 
 from flask import  Flask
 from faker import Faker
@@ -38,6 +40,18 @@ def tracks_sec():
 @app.route("/create_table/", methods=['GET'])
 def create_table():
     try:
+        con = sqlite3.connect("tables.db")
+        cur =  con.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS customers "
+                    "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "first_name CHAR(255) NOT NULL, "
+                    "last_name CHAR(255));")
+        cur.execute("CREATE TABLE IF NOT EXISTS tracks "
+                    "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "artist CHAR(255) NOT NULL, "
+                    "length_in_sec int NOT NULL, "
+                    "release_date DATE NOT NULL);")
+        con.commit()
         return ("create_table")
     except:
         return ("Something went wrong")
@@ -45,6 +59,18 @@ def create_table():
 @app.route("/fill_table/", methods=['GET'])
 def fill_table():
     try:
+        con = sqlite3.connect("tables.db")
+        cur = con.cursor()
+        data = []
+        for id in range(200):
+            name = fake.name().split(" ")
+            cur.execute("INSERT INTO customers (first_name, last_name) VALUES(?, ?)", (name[0], name[1]))
+        for id in range(200):
+            artist = fake.name()
+            lengthInSec = random.randint(60, 180)
+            releaseDate = fake.date()
+            cur.execute("INSERT INTO tracks (artist, length_in_sec, release_date)VALUES(?, ?, ?)", (artist, lengthInSec, releaseDate))
+        con.commit()
         return ("fill_table")
     except:
         return ("Something went wrong")
