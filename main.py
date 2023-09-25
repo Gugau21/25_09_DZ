@@ -19,14 +19,28 @@ def page_not_found(error):
 @app.route("/names/", methods=['GET'])
 def names():
     try:
-        return ("names")
+        con = sqlite3.connect("tables.db")
+        cur = con.cursor()
+        text = ""
+        for row in cur.execute("SELECT COUNT(DISTINCT first_name) FROM customers"):
+            text += str(row[0])
+        con.commit()
+
+        return ("Number of unique names: " + text)
     except:
         return ("Something went wrong")
 
 @app.route("/tracks/", methods=['GET'])
 def tracks():
     try:
-        return ("tracks")
+        con = sqlite3.connect("tables.db")
+        cur = con.cursor()
+        text = ""
+        for row in cur.execute("SELECT COUNT(ID) FROM tracks"):
+            text += str(row[0])
+        con.commit()
+
+        return ("Number of tracks: " + text)
     except:
         return ("Something went wrong")
 
