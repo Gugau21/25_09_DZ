@@ -1,4 +1,3 @@
-import csv
 import sqlite3
 import random
 
@@ -21,79 +20,75 @@ def page_not_found(error):
 
 @app.route("/names/", methods=["GET"])
 def names():
+    con = sqlite3.connect("tables.db")
+    cur = con.cursor()
     try:
-        con = sqlite3.connect("tables.db")
-        cur = con.cursor()
-        text = ""
-        for row in cur.execute("SELECT COUNT(DISTINCT first_name) FROM customers"):
-            text += str(row[0])
-        con.commit()
-        return "Number of unique names: " + text
-    except:
-        return "Something went wrong"
+        unique_names = cur.execute(
+            "SELECT COUNT(DISTINCT first_name) FROM customers"
+        ).fetchone()[0]
+        text = str(unique_names)
+    except sqlite3.OperationalError:
+        return "Table does not exist"
+    con.commit()
+    return "Number of unique names: " + text
 
 
 @app.route("/tracks/", methods=["GET"])
 def tracks():
+    con = sqlite3.connect("tables.db")
+    cur = con.cursor()
     try:
-        con = sqlite3.connect("tables.db")
-        cur = con.cursor()
-        text = ""
-        for row in cur.execute("SELECT COUNT(ID) FROM tracks"):
-            text += str(row[0])
-        con.commit()
-        return "Number of tracks: " + text
-    except:
-        return "Something went wrong"
+        text = str(cur.execute("SELECT COUNT(ID) FROM tracks").fetchone()[0])
+    except sqlite3.OperationalError:
+        return "Table does not exist"
+    con.commit()
+    return "Number of tracks: " + text
 
 
 @app.route("/tracks-sec/", methods=["GET"])
 def tracks_sec():
+    con = sqlite3.connect("tables.db")
+    cur = con.cursor()
     try:
-        con = sqlite3.connect("tables.db")
-        cur = con.cursor()
-        text = ""
-        for row in cur.execute("SELECT SUM(length_in_sec) FROM tracks"):
-            text += "Sum of song lengths: " + str(row[0]) + " sec<br>"
-        text += "Tracks:<br>"
+        text = (
+            "Sum of song lengths: "
+            + str(cur.execute("SELECT SUM(length_in_sec) FROM tracks").fetchone()[0])
+            + " sec<br>Tracks:<br>"
+        )
         for row in cur.execute("SELECT * FROM tracks"):
             text += " ".join(map(str, row)) + "<br>"
-        con.commit()
-        return text
-    except:
-        return "Something went wrong"
+    except sqlite3.OperationalError:
+        return "Table does not exist"
+    con.commit()
+    return text
 
 
 @app.route("/create_table/", methods=["GET"])
 def create_table():
-    try:
-        con = sqlite3.connect("tables.db")
-        cur = con.cursor()
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS customers "
-            "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "first_name CHAR(255) NOT NULL, "
-            "last_name CHAR(255));"
-        )
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS tracks "
-            "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "artist CHAR(255) NOT NULL, "
-            "length_in_sec int NOT NULL, "
-            "release_date DATE NOT NULL);"
-        )
-        con.commit()
-        return "create_table"
-    except:
-        return "Something went wrong"
+    con = sqlite3.connect("tables.db")
+    cur = con.cursor()
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS customers "
+        "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "first_name CHAR(255) NOT NULL, "
+        "last_name CHAR(255));"
+    )
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS tracks "
+        "(ID INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "artist CHAR(255) NOT NULL, "
+        "length_in_sec int NOT NULL, "
+        "release_date DATE NOT NULL);"
+    )
+    con.commit()
+    return "Table created"
 
 
 @app.route("/fill_table/", methods=["GET"])
 def fill_table():
+    con = sqlite3.connect("tables.db")
+    cur = con.cursor()
     try:
-        con = sqlite3.connect("tables.db")
-        cur = con.cursor()
-        data = []
         for id in range(200):
             name = fake.name().split(" ")
             cur.execute(
@@ -102,16 +97,16 @@ def fill_table():
             )
         for id in range(200):
             artist = fake.name()
-            lengthInSec = random.randint(60, 180)
-            releaseDate = fake.date()
+            length_in_sec = random.randint(60, 180)
+            release_date = fake.date()
             cur.execute(
                 "INSERT INTO tracks (artist, length_in_sec, release_date)VALUES(?, ?, ?)",
-                (artist, lengthInSec, releaseDate),
+                (artist, length_in_sec, release_date),
             )
-        con.commit()
-        return "fill_table"
-    except:
-        return "Something went wrong"
+    except sqlite3.OperationalError:
+        return "Table does not exist"
+    con.commit()
+    return "Table filled"
 
 
 if __name__ == "__main__":
